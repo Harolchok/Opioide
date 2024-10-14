@@ -37,6 +37,8 @@ def convert_to_patch(opioid, morphine_equivalent_dose):
             return 35
         elif 90 < morphine_equivalent_dose <= 120:
             return 52.5
+        elif morphine_equivalent_dose > 120:
+            return 70
         elif 120 < morphine_equivalent_dose <= 180:
             return 70
     return None
@@ -69,7 +71,7 @@ def calculate_equivalent_dose(current_opioid, current_route, target_opioid, targ
 
     # Asegurarse de que la dosis de morfina esté en la vía oral antes de convertir al opioide objetivo
     if target_opioid != "morfina" or target_route != "oral":
-        morphine_equivalent_dose = morphine_equivalent_dose / conversion_factor
+        morphine_equivalent_dose = morphine_equivalent_dose * conversion_factor
 
     # Convertir la dosis equivalente de morfina al opioide objetivo
     if target_opioid == "morfina":
