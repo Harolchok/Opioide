@@ -65,14 +65,15 @@ def calculate_equivalent_dose(current_opioid, current_route, target_opioid, targ
     
     # Convertir la dosis equivalente de morfina a la vía oral si no es ya oral
     if current_route != "oral":
+        morphine_equivalent_dose = morphine_equivalent_dose * conversion_factor
+
+    # Asegurarse de que la dosis de morfina esté en la vía oral antes de convertir al opioide objetivo
+    if target_opioid != "morfina" or target_route != "oral":
         morphine_equivalent_dose = morphine_equivalent_dose / conversion_factor
 
     # Convertir la dosis equivalente de morfina al opioide objetivo
     if target_opioid == "morfina":
-        if target_route == "oral":
-            target_dose = morphine_equivalent_dose
-        else:
-            target_dose = morphine_equivalent_dose * conversion_factor
+        target_dose = morphine_equivalent_dose
     elif target_route == "patch":
         return convert_to_patch(target_opioid, morphine_equivalent_dose)
     elif target_opioid == "metadona":
@@ -111,9 +112,6 @@ def main():
                 st.error("La conversión solicitada no es válida para la combinación de opioide y vía seleccionados.")
         else:
             st.warning("Por favor, ingrese una dosis válida mayor que 0.")
-
-if __name__ == "__main__":
-    main()
 
 if __name__ == "__main__":
     main()
