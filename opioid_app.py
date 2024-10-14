@@ -2,14 +2,16 @@ import streamlit as st
 
 # Tabla de equivalencia de opioides (en mg y factores de conversión para diferentes vías)
 opioid_conversion_table = {
-    "fentanilo": {"oral": None, "iv": 1, "sc": 1, "oral_factor": 100},
-    "buprenorfina": {"oral": None, "iv": None, "sc": None, "oral_factor": 75},
-    "hidromorfona": {"oral": 5, "iv": 3, "sc": 2},
-    "oxicodona": {"oral": 1.5, "iv": 2, "sc": 1},
+    "fentanilo": {"oral": None, "iv": 100, "sc": 100},
+    "buprenorfina": {"oral": None, "iv": None, "sc": None},
+    "hidromorfona": {"oral": 0.2, "iv": 0.2, "sc": 0.2},
+    "oxicodona": {"oral": 0.67, "iv": 0.5, "sc": 1},
     "morfina": {"oral": 1, "iv": 3, "sc": 2},
     "hidrocodona": {"oral": 1, "iv": None, "sc": None},
     "tapentadol": {"oral": 3.3, "iv": None, "sc": None},
-    "tramadol": {"oral": 4, "iv": 1.2, "sc": None}
+    "tramadol": {"oral": 4, "iv": 1.2, "sc": None},
+    "metadona": {"oral": 12, "iv": None, "sc": None},
+    "codeina": {"oral": 10, "iv": None, "sc": None}
 }
 
 def calculate_equivalent_dose(current_opioid, current_route, target_opioid, target_route, current_dose):
