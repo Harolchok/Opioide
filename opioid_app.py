@@ -2,7 +2,7 @@ import streamlit as st
 
 # Tabla de equivalencia de opioides (en mg y factores de conversión para diferentes vías)
 opioid_conversion_table = {
-    "fentanilo": {"oral": None, "iv": 100, "sc": 100, "patch": {
+    "fentanilo": {"oral": None, "iv": 100, "sc": None, "patch": {
         "25": 90,
         "50": 160,
         "75": 200,
@@ -12,58 +12,70 @@ opioid_conversion_table = {
         "175": 450,
         "200": 525
     }},
-    "buprenorfina": {"oral": None, "iv": None, "sc": None, "patch": {"low": 10, "medium": 20, "high": 35}},
+    "buprenorfina": {"oral": None, "iv": None, "sc": None, "patch": {"10": 30, "20": 60, "35": 90, "52.5": 120, "70": 180}},
     "hidromorfona": {"oral": 5, "iv": 5, "sc": 5},
-    "oxicodona": {"oral": 0.67, "iv": 2, "sc": 1},
+    "oxicodona": {"oral": 1.5, "iv": 2, "sc": 1},
     "morfina": {"oral": 1, "iv": 3, "sc": 2, "intratecal": 100},
     "hidrocodona": {"oral": 1, "iv": None, "sc": None},
-    "tapentadol": {"oral": 0.303, "iv": None, "sc": None},
-    "tramadol": {"oral": 4, "iv": 10, "sc": None},
-    "metadona": {"oral": None, "iv": None, "sc": None},
-    "codeina": {"oral": 0.1, "iv": None, "sc": None}
+    "tapentadol": {"oral": 1 / 3.3, "iv": None, "sc": None},
+    "tramadol": {"oral": 1 / 4, "iv": 1 / 10, "sc": None},
+    "metadona": {"oral": 12, "iv": None, "sc": None},
+    "codeina": {"oral": 1 / 10, "iv": None, "sc": None}
 }
 
-def calculate_equivalent_dose(current_opioid, current_route, target_opioid, target_route, current_dose):
-    if target_opioid == "fentanilo" and target_route == "patch" or target_route == "intratecal":
-        # Definir rangos según DEMOD para parches de fentanilo
-        demod = current_dose / opioid_conversion_table[current_opioid][current_route]
+def convert_to_patch(opioid, morphine_equivalent_dose):
+    if opioid == "fentanilo":
         for dose, limit in opioid_conversion_table["fentanilo"]["patch"].items():
-            if demod <= limit:
+            if morphine_equivalent_dose <= limit:
                 return f"{dose} mcg/h"
-    elif target_opioid == "buprenorfina" and target_route == "patch":
-        demod = current_dose / opioid_conversion_table[current_opioid][current_route]
-        if demod <= 60:
-            return opioid_conversion_table["buprenorfina"]["patch"]["low"]
-        elif 60 < demod <= 180:
-            return opioid_conversion_table["buprenorfina"]["patch"]["medium"]
-        else:
-            return opioid_conversion_table["buprenorfina"]["patch"]["high"]
-    elif target_opioid == "metadona":
-        # Calcular DEMOD para determinar el factor de conversión adecuado
-        demod = current_dose * opioid_conversion_table[current_opioid][current_route]
-        if demod <= 90:
-            factor = 4
-        elif 90 < demod <= 300:
-            factor = 8
-        else:
-            factor = 12
-        # Convertir morfina a metadona usando el factor correspondiente
-        return demod / factor
-    elif current_opioid == "metadona" and target_opioid == "morfina":
-        # Convertir metadona a morfina usando un factor fijo de 5
-        return current_dose * 5
+    elif opioid == "buprenorfina":
+        if morphine_equivalent_dose < 30:
+            return 10
+        elif 30 <= morphine_equivalent_dose <= 60:
+            return 20
+        elif 60 < morphine_equivalent_dose <= 90:
+            return 35
+        elif 90 < morphine_equivalent_dose <= 120:
+            return 52.5
+        elif 120 < morphine_equivalent_dose <= 180:
+            return 70
+    return None
+
+def calculate_metadona_dose(morphine_equivalent_dose):
+    if morphine_equivalent_dose <= 90:
+        factor = 4
+    elif 90 < morphine_equivalent_dose <= 300:
+        factor = 8
     else:
-        # Convertir la dosis actual al equivalente en morfina intravenosa si es necesario
-        if current_route != "iv":
-            current_dose = current_dose * opioid_conversion_table[current_opioid][current_route] / opioid_conversion_table["morfina"]["iv"]
-        # Convertir la dosis de morfina intravenosa al opioide objetivo
-        if target_opioid == "fentanilo" and target_route == "iv":
-            target_dose = current_dose / 100
-        elif target_opioid == "morfina" and target_route == "intratecal":
-            target_dose = current_dose / 100
-        else:
-            target_dose = current_dose / opioid_conversion_table[target_opioid][target_route]
-        return target_dose
+        factor = 12
+    return morphine_equivalent_dose / factor
+
+def calculate_equivalent_dose(current_opioid, current_route, target_opioid, target_route, current_dose):
+    # Verificar la disponibilidad de las presentaciones
+    if opioid_conversion_table[current_opioid][current_route] is None or opioid_conversion_table[target_opioid][target_route] is None:
+        raise TypeError("La conversión solicitada no es válida para la combinación de opioide y vía seleccionados.")
+
+    # Convertir la dosis actual al equivalente en morfina intravenosa
+    if current_opioid == "morfina" and current_route == "iv":
+        morphine_equivalent_dose = current_dose
+    else:
+        morphine_equivalent_dose = current_dose * opioid_conversion_table[current_opioid][current_route]
+    
+    # Convertir la dosis equivalente de morfina al opioide objetivo
+    if target_opioid == "morfina" and target_route == "iv":
+        target_dose = morphine_equivalent_dose
+    elif target_route == "patch":
+        return convert_to_patch(target_opioid, morphine_equivalent_dose)
+    elif target_opioid == "metadona":
+        target_dose = calculate_metadona_dose(morphine_equivalent_dose)
+    elif current_opioid == "metadona" and target_opioid == "morfina":
+        target_dose = current_dose * 5
+    elif target_opioid == "morfina" and target_route == "intratecal":
+        target_dose = morphine_equivalent_dose / 100
+    else:
+        target_dose = morphine_equivalent_dose / opioid_conversion_table[target_opioid][target_route]
+    
+    return target_dose
 
 def main():
     st.title("Rotación de Opioides")
