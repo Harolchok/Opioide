@@ -39,8 +39,6 @@ def convert_to_patch(opioid, morphine_equivalent_dose):
             return 52.5
         elif morphine_equivalent_dose > 120:
             return 70
-        elif 120 < morphine_equivalent_dose <= 180:
-            return 70
     return None
 
 def calculate_metadona_dose(morphine_equivalent_dose):
@@ -54,7 +52,7 @@ def calculate_metadona_dose(morphine_equivalent_dose):
 
 def calculate_equivalent_dose(current_opioid, current_route, target_opioid, target_route, current_dose, conversion_factor):
     # Verificar la disponibilidad de las presentaciones
-    if opioid_conversion_table[current_opioid][current_route] is None or opioid_conversion_table[target_opioid][target_route] is None:
+    if opioid_conversion_table[current_opioid][current_route] is None or (target_opioid != "patch" and opioid_conversion_table[target_opioid][target_route] is None):
         raise TypeError("La conversión solicitada no es válida para la combinación de opioide y vía seleccionados.")
 
     # Convertir la dosis actual al equivalente en morfina oral
@@ -66,15 +64,11 @@ def calculate_equivalent_dose(current_opioid, current_route, target_opioid, targ
         morphine_equivalent_dose = current_dose * opioid_conversion_table[current_opioid][current_route]
     
     # Convertir la dosis equivalente de morfina a la vía oral si no es ya oral
-    if current_route != "oral":
-        morphine_equivalent_dose = morphine_equivalent_dose * conversion_factor
-
-    # Asegurarse de que la dosis de morfina esté en la vía oral antes de convertir al opioide objetivo
-    if target_opioid != "morfina" or target_route != "oral":
+    if current_route != "oral" and current_opioid != "patch":
         morphine_equivalent_dose = morphine_equivalent_dose * conversion_factor
 
     # Convertir la dosis equivalente de morfina al opioide objetivo
-    if target_opioid == "morfina":
+    if target_opioid == "morfina" and target_route == "oral":
         target_dose = morphine_equivalent_dose
     elif target_route == "patch":
         return convert_to_patch(target_opioid, morphine_equivalent_dose)
@@ -87,7 +81,7 @@ def calculate_equivalent_dose(current_opioid, current_route, target_opioid, targ
         target_dose = morphine_equivalent_dose / opioid_conversion_table[target_opioid]["oral"]
         # Cambiar la vía de administración si es necesario
         if target_route != "oral":
-            target_dose = target_dose * opioid_conversion_table[target_opioid][target_route]
+            target_dose = target_dose / conversion_factor
     
     return target_dose
 
@@ -100,7 +94,7 @@ def main():
 
     # Seleccionar opioides, vías de administración y dosis actual
     current_opioid = st.selectbox("Seleccione el opioide actual", list(opioid_conversion_table.keys()))
-    current_route = st.selectbox("Seleccione la vía de administración actual", ["oral", "iv", "sc"])
+    current_route = st.selectbox("Seleccione la vía de administración actual", ["oral", "iv", "sc", "patch"])
     target_opioid = st.selectbox("Seleccione el opioide al que desea rotar", list(opioid_conversion_table.keys()))
     target_route = st.selectbox("Seleccione la vía de administración deseada", ["oral", "iv", "sc", "patch", "intratecal"])
     current_dose = st.number_input("Ingrese la dosis actual en mg", min_value=0.0, step=1.0)
