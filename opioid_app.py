@@ -17,10 +17,10 @@ opioid_conversion_table = {
     "oxicodona": {"oral": 1.5, "iv": 2, "sc": 1},
     "morfina": {"oral": 1, "iv": 3, "sc": 2, "intratecal": 100},
     "hidrocodona": {"oral": 1, "iv": None, "sc": None},
-    "tapentadol": {"oral": 1 / 3.3, "iv": None, "sc": None},
-    "tramadol": {"oral": 1 / 4, "iv": 1 / 10, "sc": None},
-    "metadona": {"oral": 12, "iv": None, "sc": None},
-    "codeina": {"oral": 1 / 10, "iv": None, "sc": None}
+    "tapentadol": {"oral": 3.3, "iv": None, "sc": None},
+    "tramadol": {"oral": 4, "iv": 10, "sc": None},
+    "metadona": {"oral": 5, "iv": None, "sc": None},
+    "codeina": {"oral": 10, "iv": None, "sc": None}
 }
 
 def convert_to_patch(opioid, morphine_equivalent_dose):
@@ -55,25 +55,36 @@ def calculate_equivalent_dose(current_opioid, current_route, target_opioid, targ
     if opioid_conversion_table[current_opioid][current_route] is None or opioid_conversion_table[target_opioid][target_route] is None:
         raise TypeError("La conversión solicitada no es válida para la combinación de opioide y vía seleccionados.")
 
-    # Convertir la dosis actual al equivalente en morfina intravenosa
-    if current_opioid == "morfina" and current_route == "iv":
+    # Convertir la dosis actual al equivalente en morfina oral
+    if current_opioid == "morfina" and current_route == "oral":
         morphine_equivalent_dose = current_dose
+    elif current_opioid in ["tapentadol", "tramadol", "codeina"]:
+        morphine_equivalent_dose = current_dose / opioid_conversion_table[current_opioid][current_route]
     else:
         morphine_equivalent_dose = current_dose * opioid_conversion_table[current_opioid][current_route]
     
+    # Convertir la dosis equivalente de morfina a la vía oral si no es ya oral
+    if current_route != "oral":
+        morphine_equivalent_dose = morphine_equivalent_dose * opioid_conversion_table["morfina"][current_route]
+
     # Convertir la dosis equivalente de morfina al opioide objetivo
-    if target_opioid == "morfina" and target_route == "iv":
-        target_dose = morphine_equivalent_dose
+    if target_opioid == "morfina":
+        if target_route == "oral":
+            target_dose = morphine_equivalent_dose
+        else:
+            target_dose = morphine_equivalent_dose / opioid_conversion_table["morfina"][target_route]
     elif target_route == "patch":
         return convert_to_patch(target_opioid, morphine_equivalent_dose)
     elif target_opioid == "metadona":
         target_dose = calculate_metadona_dose(morphine_equivalent_dose)
     elif current_opioid == "metadona" and target_opioid == "morfina":
         target_dose = current_dose * 5
-    elif target_opioid == "morfina" and target_route == "intratecal":
-        target_dose = morphine_equivalent_dose / 100
     else:
-        target_dose = morphine_equivalent_dose / opioid_conversion_table[target_opioid][target_route]
+        # Convertir la morfina oral al opioide objetivo
+        target_dose = morphine_equivalent_dose / opioid_conversion_table[target_opioid]["oral"]
+        # Cambiar la vía de administración si es necesario
+        if target_route != "oral":
+            target_dose = target_dose * opioid_conversion_table[target_opioid][target_route]
     
     return target_dose
 
