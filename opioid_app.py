@@ -1,6 +1,7 @@
 import streamlit as st
 
 # Tabla de equivalencia de opioides (en mg y factores de conversión para diferentes vías)
+# Esta tabla define los factores de conversión entre diferentes opioides y sus vías de administración.
 opioid_conversion_table = {
     "fentanilo": {"oral": None, "iv": 100, "sc": None, "patch": {
         "25": 90,
@@ -24,11 +25,13 @@ opioid_conversion_table = {
 }
 
 def convert_to_patch(opioid, morphine_equivalent_dose):
+    # Función para convertir morfina equivalente a parches de fentanilo o buprenorfina
     if opioid == "fentanilo":
         for dose, limit in opioid_conversion_table["fentanilo"]["patch"].items():
             if morphine_equivalent_dose <= limit:
                 return f"{dose} mcg/h"
     elif opioid == "buprenorfina":
+        # Determinar el parche de buprenorfina según la dosis de morfina equivalente
         if morphine_equivalent_dose < 30:
             return 10
         elif 30 <= morphine_equivalent_dose <= 60:
@@ -42,28 +45,31 @@ def convert_to_patch(opioid, morphine_equivalent_dose):
     return None
 
 def calculate_metadona_dose(morphine_equivalent_dose):
+    # Función para calcular la dosis de metadona basada en la dosis de morfina equivalente
     if morphine_equivalent_dose < 30:
+        # Si la dosis es menor a 30 mg, no se puede convertir a metadona
         raise ValueError("La dosis de morfina equivalente debe ser al menos 30 mg para convertir a metadona.")
     elif 30 <= morphine_equivalent_dose <= 90:
-        factor = 4
+        factor = 4  # Factor de conversión 4:1 para dosis entre 30 y 90 mg
     elif 90 < morphine_equivalent_dose <= 300:
-        factor = 8
+        factor = 8  # Factor de conversión 8:1 para dosis entre 90 y 300 mg
     elif morphine_equivalent_dose > 300:
-        factor = 12
-    return morphine_equivalent_dose / factor
+        factor = 12  # Factor de conversión 12:1 para dosis mayores a 300 mg
     return morphine_equivalent_dose / factor
 
 def calculate_equivalent_dose(current_opioid, current_route, target_opioid, target_route, current_dose, conversion_factor):
-    # Verificar la disponibilidad de las presentaciones
+    # Verificar la disponibilidad de las presentaciones para la conversión
     if opioid_conversion_table[current_opioid][current_route] is None or (target_opioid != "patch" and opioid_conversion_table[target_opioid][target_route] is None):
         raise TypeError("La conversión solicitada no es válida para la combinación de opioide y vía seleccionados.")
 
     # Convertir la dosis actual al equivalente en morfina oral
     if current_opioid == "morfina" and current_route == "oral":
-        morphine_equivalent_dose = current_dose
+        morphine_equivalent_dose = current_dose  # Si ya es morfina oral, no es necesario convertir
     elif current_opioid in ["tapentadol", "tramadol", "codeina"]:
+        # Para opioides menos potentes que la morfina, dividir la dosis actual por el factor de conversión
         morphine_equivalent_dose = current_dose / opioid_conversion_table[current_opioid][current_route]
     else:
+        # Para opioides más potentes o diferentes vías, multiplicar la dosis actual por el factor de conversión
         morphine_equivalent_dose = current_dose * opioid_conversion_table[current_opioid][current_route]
     
     # Convertir la dosis equivalente de morfina a la vía oral si no es ya oral
@@ -72,12 +78,18 @@ def calculate_equivalent_dose(current_opioid, current_route, target_opioid, targ
 
     # Convertir la dosis equivalente de morfina al opioide objetivo
     if target_opioid == "morfina" and target_route == "oral":
-        target_dose = morphine_equivalent_dose
+        target_dose = morphine_equivalent_dose  # Si el objetivo es morfina oral, ya tenemos el resultado
     elif target_route == "patch":
+        # Si el objetivo es un parche, usar la función convert_to_patch
         return convert_to_patch(target_opioid, morphine_equivalent_dose)
     elif target_opioid == "metadona":
+        # Si el objetivo es metadona, primero convertir a morfina oral si no lo es aún
+        if current_opioid != "morfina" or current_route != "oral":
+            morphine_equivalent_dose = morphine_equivalent_dose / conversion_factor if current_route != "oral" else morphine_equivalent_dose
+        # Luego usar la función calculate_metadona_dose para la conversión final
         target_dose = calculate_metadona_dose(morphine_equivalent_dose)
     elif current_opioid == "metadona" and target_opioid == "morfina":
+        # Convertir de metadona a morfina utilizando un factor fijo de 5:1
         target_dose = current_dose * 5
     else:
         # Convertir la morfina oral al opioide objetivo
