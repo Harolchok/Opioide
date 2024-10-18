@@ -48,8 +48,7 @@ def calculate_metadona_dose(morphine_equivalent_dose):
         return morphine_equivalent_dose / 8
     elif morphine_equivalent_dose > 300:
         return morphine_equivalent_dose / 12
-    return morphine_equivalent_dose / factor
-
+    
 def calculate_equivalent_dose(current_opioid, current_route, target_opioid, target_route, current_dose, conversion_factor):
     # Verificar la disponibilidad de las presentaciones
     if opioid_conversion_table[current_opioid][current_route] is None or (target_opioid != "patch" and opioid_conversion_table[target_opioid][target_route] is None):
