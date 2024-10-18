@@ -41,7 +41,7 @@ def convert_to_patch(opioid, morphine_equivalent_dose):
             return 70
     return None
 
-def calculate_metadona_dose(morphine_equivalent_dose):
+def calculate_metadona_dose(opioid, morphine_equivalent_dose):
     if morphine_equivalent_dose < 30:
         raise ValueError("La dosis de morfina equivalente debe ser al menos 30 mg para convertir a metadona.")
     elif 30 <= morphine_equivalent_dose <= 90:
