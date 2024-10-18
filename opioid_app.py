@@ -42,13 +42,17 @@ def convert_to_patch(opioid, morphine_equivalent_dose):
     return None
 
 def calculate_metadona_dose(morphine_equivalent_dose):
-    if 30 <= morphine_equivalent_dose <= 90:
-        return morphine_equivalent_dose / 4
+    if morphine_equivalent_dose < 30:
+        raise ValueError("La dosis de morfina equivalente debe ser al menos 30 mg para convertir a metadona.")
+    elif 30 <= morphine_equivalent_dose <= 90:
+        factor = 4
     elif 90 < morphine_equivalent_dose <= 300:
-        return morphine_equivalent_dose / 8
+        factor = 8
     elif morphine_equivalent_dose > 300:
-        return morphine_equivalent_dose / 12
-    
+        factor = 12
+    return morphine_equivalent_dose / factor
+    return morphine_equivalent_dose / factor
+
 def calculate_equivalent_dose(current_opioid, current_route, target_opioid, target_route, current_dose, conversion_factor):
     # Verificar la disponibilidad de las presentaciones
     if opioid_conversion_table[current_opioid][current_route] is None or (target_opioid != "patch" and opioid_conversion_table[target_opioid][target_route] is None):
