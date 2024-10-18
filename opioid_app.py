@@ -42,7 +42,7 @@ def convert_to_patch(opioid, morphine_equivalent_dose):
     return None
 
 def calculate_metadona_dose(morphine_equivalent_dose):
-    if 30 <= morphine_equivalent_dose <= 90:
+    if morphine_equivalent_dose <= 30:
         factor = 4
     elif 90 < morphine_equivalent_dose <= 300:
         factor = 8
