@@ -59,11 +59,11 @@ def calculate_equivalent_dose(current_opioid, current_route, target_opioid, targ
     if current_opioid == "morfina":
         if current_route == "oral":
             # Convertir morfina oral a morfina IV
-            morphine_iv_dose = current_dose / conversion_factor if current_route == "oral" and target_route == "iv" else current_dose
+            morphine_iv_dose = current_dose / conversion_factor
             st.write(f"Dosis Equivalente de Morfina IV: {morphine_iv_dose}")
         elif current_route == "iv":
             # Convertir morfina IV a morfina oral
-            morphine_iv_dose = current_dose * conversion_factor if current_route == "iv" and target_route == "oral" else current_dose
+            morphine_iv_dose = current_dose * conversion_factor
             st.write(f"Dosis Equivalente de Morfina Oral (DEMOD): {morphine_iv_dose}")
         if current_route == "oral" and target_route == "oral":
             st.write(f"Dosis Equivalente de Morfina Oral (DEMOD): {current_dose}")
