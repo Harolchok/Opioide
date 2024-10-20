@@ -91,15 +91,23 @@ def calculate_equivalent_dose(current_opioid, current_route, target_opioid, targ
         target_dose = current_dose * 5
     else:
         # Convertir la morfina IV al opioide objetivo
-        if target_opioid in ["tapentadol", "tramadol"]:
-            # Para opioides menos potentes que la morfina, multiplicar por el factor
-            target_dose = morphine_iv_dose * opioid_conversion_table[target_opioid]["oral"]
-        else:
-            # Para opioides más potentes que la morfina, dividir por el factor
+        if target_opioid == "hidromorfona" and target_route == "oral":
+            # Convertir morfina a hidromorfona oral
             target_dose = morphine_iv_dose / opioid_conversion_table[target_opioid]["oral"]
-        # Cambiar la vía de administración si es necesario
-        if target_route != "oral":
-            target_dose = target_dose / opioid_conversion_table[target_opioid][target_route]
+        elif target_opioid == "morfina" and target_route == "oral" and current_opioid == "hidromorfona":
+            # Convertir hidromorfona oral a morfina oral
+            target_dose = current_dose * opioid_conversion_table[current_opioid]["oral"]
+        else:
+            # Para otros opioides, ajustar la conversión según el factor correspondiente
+            if target_opioid in ["tapentadol", "tramadol"]:
+                # Para opioides menos potentes que la morfina, multiplicar por el factor
+                target_dose = morphine_iv_dose * opioid_conversion_table[target_opioid]["oral"]
+            else:
+                # Para opioides más potentes que la morfina, dividir por el factor
+                target_dose = morphine_iv_dose / opioid_conversion_table[target_opioid]["oral"]
+            # Cambiar la vía de administración si es necesario
+            if target_route != "oral":
+                target_dose = target_dose / opioid_conversion_table[target_opioid][target_route]
     
     return target_dose
 
