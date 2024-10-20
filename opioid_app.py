@@ -60,9 +60,7 @@ def calculate_equivalent_dose(current_opioid, current_route, target_opioid, targ
         raise TypeError("La conversión solicitada no es válida para la combinación de opioide y vía seleccionados.")
 
     # Paso 1: Convertir la dosis actual al equivalente en morfina por la misma vía
-    if current_route == "iv":
-        morphine_dose = current_dose * opioid_conversion_table[current_opioid][current_route]
-    elif current_route == "oral":
+    if current_opioid != "morfina":
         morphine_dose = current_dose * opioid_conversion_table[current_opioid][current_route]
     else:
         morphine_dose = current_dose
@@ -78,9 +76,7 @@ def calculate_equivalent_dose(current_opioid, current_route, target_opioid, targ
         target_dose = morphine_dose / opioid_conversion_table[target_opioid][target_route]
     elif target_opioid in less_potent_opioids:
         target_dose = morphine_dose * opioid_conversion_table[target_opioid][target_route]
-    elif target_opioid == "hidrocodona":
-        target_dose = morphine_dose
-    elif target_opioid == "morfina":
+    elif target_opioid == "hidrocodona" or target_opioid == "morfina":
         target_dose = morphine_dose
     elif target_route == "patch":
         patch_table = opioid_conversion_table[target_opioid].get("patch", {})
