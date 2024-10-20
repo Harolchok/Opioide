@@ -21,26 +21,26 @@ def calculate_equivalent_dose(current_opioid, current_route, target_opioid, targ
     if opioid_conversion_table[current_opioid].get(current_route) is None:
         raise TypeError("La conversión solicitada no es válida para la combinación de opioide y vía seleccionados.")
 
-    # Convertir la dosis actual al equivalente en morfina IV
+    # Convertir la dosis actual al equivalente en morfina oral
     if current_opioid == "morfina" and current_route == "oral":
         morphine_iv_dose = current_dose / conversion_factor
     elif current_opioid == "morfina" and current_route == "iv":
-        morphine_iv_dose = current_dose * conversion_factor
+        morphine_oral_dose = current_dose * conversion_factor
     else:
-        morphine_iv_dose = current_dose * opioid_conversion_table[current_opioid][current_route]
+        morphine_oral_dose = current_dose * opioid_conversion_table[current_opioid][current_route]
 
-    # Convertir la dosis de morfina IV al opioide objetivo
+    # Convertir la dosis de morfina oral al opioide objetivo
     if target_opioid == "morfina" and target_route == "oral":
-        target_dose = morphine_iv_dose * conversion_factor
+        target_dose = morphine_oral_dose
     elif target_opioid == "morfina" and target_route == "iv":
-        target_dose = morphine_iv_dose / conversion_factor
+        target_dose = morphine_oral_dose / conversion_factor
     elif target_route == "patch":
         patch_table = opioid_conversion_table[target_opioid].get("patch", {})
         for dose, limit in patch_table.items():
-            if morphine_iv_dose <= limit:
+            if morphine_oral_dose <= limit:
                 return f"{dose} mcg/h"
     else:
-        target_dose = morphine_iv_dose / opioid_conversion_table[target_opioid][target_route]
+        target_dose = morphine_oral_dose / opioid_conversion_table[target_opioid][target_route]
     
     return target_dose
 
