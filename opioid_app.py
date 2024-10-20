@@ -58,14 +58,14 @@ def calculate_equivalent_dose(current_opioid, current_route, target_opioid, targ
     # Convertir la dosis actual al equivalente en morfina IV
     if current_opioid == "morfina" and current_route == "oral":
         # Convertir morfina oral a morfina IV
-        morphine_iv_dose = current_dose * opioid_conversion_table[current_opioid]["iv"]
+        morphine_iv_dose = current_dose / opioid_conversion_table[current_opioid]["iv"]
         st.write(f"Dosis Equivalente de Morfina Oral (DEMOD): {current_dose}")
     else:
         morphine_iv_dose = current_dose
 
     # Convertir la dosis de morfina IV al opioide objetivo IV
     if target_route == "iv":
-        target_dose = morphine_iv_dose * opioid_conversion_table[target_opioid]["iv"] if target_opioid in ["tapentadol", "tramadol"] else morphine_iv_dose / opioid_conversion_table[target_opioid]["iv"]
+        target_dose = morphine_iv_dose / opioid_conversion_table[target_opioid]["iv"]
     elif target_route == "patch":
         # Si el objetivo es un parche, usar la función convert_to_patch
         return convert_to_patch(target_opioid, morphine_iv_dose)
