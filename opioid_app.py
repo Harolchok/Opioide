@@ -39,7 +39,7 @@ def convert_to_patch(opioid, morphine_equivalent_dose):
 
 def calculate_metadona_dose(morphine_equivalent_dose):
     # Función para calcular la dosis de metadona basada en la dosis de morfina equivalente
-    st.write(f"Dosis de morfina equivalente: {morphine_equivalent_dose}")  # Depuración
+    st.write(f"Dosis de morfina equivalente (DEMOD): {morphine_equivalent_dose}")  # Depuración
     if morphine_equivalent_dose < 30:
         # Si la dosis es menor a 30 mg, no se puede convertir a metadona
         raise ValueError("La dosis de morfina equivalente debe ser al menos 30 mg para convertir a metadona.")
@@ -66,6 +66,9 @@ def calculate_equivalent_dose(current_opioid, current_route, target_opioid, targ
     # Convertir la dosis equivalente de morfina a la vía oral si no es ya oral
     if current_route in ["iv", "sc"]:
         morphine_equivalent_dose = morphine_equivalent_dose * conversion_factor
+
+    # Mostrar la DEMOD para depuración
+    st.write(f"Dosis Equivalente de Morfina Oral (DEMOD): {morphine_equivalent_dose}")
 
     # Convertir la dosis equivalente de morfina al opioide objetivo
     if target_opioid == "morfina" and target_route == "oral":
