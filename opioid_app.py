@@ -57,16 +57,15 @@ def calculate_equivalent_dose(current_opioid, current_route, target_opioid, targ
         raise TypeError("La conversión solicitada no es válida para la combinación de opioide y vía seleccionados.")
 
     # Convertir la dosis actual al equivalente en morfina oral
-    if current_opioid == "morfina" and current_route == "oral":
+    if current_opioid == "morfina" and current_route == "iv":
+        # Si es morfina IV, se requiere solo un paso para convertir a morfina oral
+        morphine_equivalent_dose = current_dose * conversion_factor
+    elif current_opioid == "morfina" and current_route == "oral":
         morphine_equivalent_dose = current_dose  # Si ya es morfina oral, no es necesario convertir
     else:
         # Para otros opioides, usar el factor de conversión correspondiente
         morphine_equivalent_dose = current_dose * opioid_conversion_table[current_opioid][current_route]
     
-    # Convertir la dosis equivalente de morfina a la vía oral si no es ya oral
-    if current_route in ["iv", "sc"]:
-        morphine_equivalent_dose = morphine_equivalent_dose * conversion_factor
-
     # Mostrar la DEMOD para depuración
     st.write(f"Dosis Equivalente de Morfina Oral (DEMOD): {morphine_equivalent_dose}")
 
