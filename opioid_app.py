@@ -96,15 +96,22 @@ def main():
     st.title("Rotación de Opioides")
     st.write("Ingrese el opioide actual, la vía de administración y el opioide al que desea rotar con la vía de administración deseada para obtener la dosis equivalente.")
 
-    # Seleccionar el factor de conversión entre oral e IV
-    conversion_factor = st.radio("Seleccione el factor de conversión entre oral e IV", (2, 3))
+    # Organizar la selección de opciones en columnas
+    col1, col2 = st.columns(2)
 
-    # Seleccionar opioides, vías de administración y dosis actual
-    current_opioid = st.selectbox("Seleccione el opioide actual", list(opioid_conversion_table.keys()))
-    current_route = st.selectbox("Seleccione la vía de administración actual", ["oral", "iv", "sc", "patch"])
-    target_opioid = st.selectbox("Seleccione el opioide al que desea rotar", list(opioid_conversion_table.keys()))
-    target_route = st.selectbox("Seleccione la vía de administración deseada", ["oral", "iv", "sc", "patch", "intratecal"])
-    current_dose = st.number_input("Ingrese la dosis actual en mg", min_value=0.0, step=1.0)
+    with col1:
+        # Seleccionar el factor de conversión entre oral e IV
+        conversion_factor = st.radio("Seleccione el factor de conversión entre oral e IV", (2, 3))
+        # Seleccionar opioides, vías de administración y dosis actual
+        current_opioid = st.selectbox("Seleccione el opioide actual", list(opioid_conversion_table.keys()))
+        available_routes = [route for route, factor in opioid_conversion_table[current_opioid].items() if factor is not None]
+        current_route = st.selectbox("Seleccione la vía de administración actual", available_routes)
+        current_dose = st.number_input("Ingrese la dosis actual en mg", min_value=0.0, step=1.0)
+
+    with col2:
+        target_opioid = st.selectbox("Seleccione el opioide al que desea rotar", list(opioid_conversion_table.keys()))
+        available_target_routes = [route for route, factor in opioid_conversion_table[target_opioid].items() if factor is not None]
+        target_route = st.selectbox("Seleccione la vía de administración deseada", available_target_routes)
 
     if st.button("Calcular Dosis Equivalente"):
         if current_dose > 0:
