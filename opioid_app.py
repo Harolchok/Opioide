@@ -45,6 +45,15 @@ def calculate_metadona_dose(morphine_equivalent_dose):
         factor = 12  # Factor de conversión 12:1 para dosis mayores a 300 mg
     return morphine_equivalent_dose / factor
 
+def convert_morphine_iv_oral(current_route, current_dose, conversion_factor):
+    # Función para convertir entre morfina oral e IV
+    if current_route == "oral":
+        return current_dose / conversion_factor  # Morfina oral a IV
+    elif current_route == "iv":
+        return current_dose * conversion_factor  # Morfina IV a oral
+    else:
+        raise ValueError("Ruta no válida para la conversión de morfina.")
+
 def calculate_equivalent_dose(current_opioid, current_route, target_opioid, target_route, current_dose, conversion_factor):
     # Verificar la disponibilidad de las presentaciones para la conversión
     if opioid_conversion_table[current_opioid].get(current_route) is None:
@@ -55,11 +64,14 @@ def calculate_equivalent_dose(current_opioid, current_route, target_opioid, targ
         return current_dose
 
     # Convertir la dosis actual al equivalente en morfina IV
-    morphine_iv_dose = current_dose * opioid_conversion_table[current_opioid][current_route]
+    if current_opioid == "morfina":
+        morphine_iv_dose = convert_morphine_iv_oral(current_route, current_dose, conversion_factor)
+    else:
+        morphine_iv_dose = current_dose * opioid_conversion_table[current_opioid][current_route]
 
     # Convertir un opioide IV a morfina oral (DEMOD)
-    if target_opioid == "morfina" and target_route == "oral":
-        target_dose = morphine_iv_dose * conversion_factor
+    if target_opioid == "morfina" and target_route == "oral" and current_opioid != "morfina":
+        target_dose = convert_morphine_iv_oral("iv", morphine_iv_dose, conversion_factor)
     # Convertir la dosis de morfina IV al opioide objetivo IV
     elif target_route == "iv":
         target_dose = morphine_iv_dose / opioid_conversion_table[target_opioid]["iv"]
