@@ -55,37 +55,28 @@ def calculate_equivalent_dose(current_opioid, current_route, target_opioid, targ
     if opioid_conversion_table[current_opioid][current_route] is None or (target_opioid != "patch" and opioid_conversion_table[target_opioid][target_route] is None):
         raise TypeError("La conversión solicitada no es válida para la combinación de opioide y vía seleccionados.")
 
-    # Convertir la dosis actual al equivalente en morfina oral
-    if current_opioid == "morfina" and current_route == "iv":
-        # Si es morfina IV, se requiere solo un paso para convertir a morfina oral
-        morphine_equivalent_dose = current_dose * conversion_factor
-    elif current_opioid == "morfina" and current_route == "oral":
-        morphine_equivalent_dose = current_dose  # Si ya es morfina oral, no es necesario convertir
+    # Convertir la dosis actual al equivalente en morfina IV
+    if current_opioid == "morfina" and current_route == "oral":
+        # Convertir morfina oral a morfina IV
+        morphine_iv_dose = current_dose / opioid_conversion_table[current_opioid]["iv"]
     else:
-        # Para otros opioides, usar el factor de conversión correspondiente
-        morphine_equivalent_dose = current_dose * opioid_conversion_table[current_opioid][current_route]
-        # Si la ruta actual es IV o SC, convertir a morfina oral
-        if current_route in ["iv", "sc"] and current_opioid != "morfina":
-            morphine_equivalent_dose = morphine_equivalent_dose * conversion_factor
-    
-    # Mostrar la DEMOD para depuración
-    st.write(f"Dosis Equivalente de Morfina Oral (DEMOD): {morphine_equivalent_dose}")
+        morphine_iv_dose = current_dose
 
-    # Convertir la dosis equivalente de morfina al opioide objetivo
-    if target_opioid == "morfina" and target_route == "oral":
-        target_dose = morphine_equivalent_dose  # Si el objetivo es morfina oral, ya tenemos el resultado
+    # Convertir la dosis de morfina IV al opioide objetivo IV
+    if target_route == "iv":
+        target_dose = morphine_iv_dose / opioid_conversion_table[target_opioid]["iv"]
     elif target_route == "patch":
         # Si el objetivo es un parche, usar la función convert_to_patch
-        return convert_to_patch(target_opioid, morphine_equivalent_dose)
+        return convert_to_patch(target_opioid, morphine_iv_dose)
     elif target_opioid == "metadona":
         # Si el objetivo es metadona, usar la función calculate_metadona_dose para la conversión final
-        target_dose = calculate_metadona_dose(morphine_equivalent_dose)
+        target_dose = calculate_metadona_dose(morphine_iv_dose)
     elif current_opioid == "metadona" and target_opioid == "morfina":
         # Convertir de metadona a morfina utilizando un factor fijo de 5:1
         target_dose = current_dose * 5
     else:
         # Convertir la morfina oral al opioide objetivo
-        target_dose = morphine_equivalent_dose / opioid_conversion_table[target_opioid]["oral"]
+        target_dose = morphine_iv_dose * opioid_conversion_table[target_opioid]["oral"] if target_opioid in ["tapentadol", "tramadol"] else morphine_iv_dose / opioid_conversion_table[target_opioid]["oral"]
         # Cambiar la vía de administración si es necesario
         if target_route != "oral":
             target_dose = target_dose / opioid_conversion_table[target_opioid][target_route]
@@ -97,11 +88,10 @@ def main():
     st.write("Ingrese el opioide actual, la vía de administración y el opioide al que desea rotar con la vía de administración deseada para obtener la dosis equivalente.")
 
     # Organizar la selección de opciones en columnas
+    conversion_factor = st.radio("Seleccione el factor de conversión entre oral e IV", (2, 3))
     col1, col2 = st.columns(2)
 
     with col1:
-        # Seleccionar el factor de conversión entre oral e IV
-        conversion_factor = st.radio("Seleccione el factor de conversión entre oral e IV", (2, 3))
         # Seleccionar opioides, vías de administración y dosis actual
         current_opioid = st.selectbox("Seleccione el opioide actual", list(opioid_conversion_table.keys()))
         available_routes = [route for route, factor in opioid_conversion_table[current_opioid].items() if factor is not None]
