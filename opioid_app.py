@@ -32,16 +32,9 @@ def convert_to_patch(opioid, morphine_equivalent_dose):
                 return f"{dose} mcg/h"
     elif opioid == "buprenorfina":
         # Determinar el parche de buprenorfina según la dosis de morfina equivalente
-        if morphine_equivalent_dose < 30:
-            return 10
-        elif 30 <= morphine_equivalent_dose <= 60:
-            return 20
-        elif 60 < morphine_equivalent_dose <= 90:
-            return 35
-        elif 90 < morphine_equivalent_dose <= 120:
-            return 52.5
-        elif morphine_equivalent_dose > 120:
-            return 70
+        for dose, limit in opioid_conversion_table["buprenorfina"]["patch"].items():
+            if morphine_equivalent_dose <= limit:
+                return f"{dose} mcg/h"
     return None
 
 def calculate_metadona_dose(morphine_equivalent_dose):
@@ -65,17 +58,10 @@ def calculate_equivalent_dose(current_opioid, current_route, target_opioid, targ
     # Convertir la dosis actual al equivalente en morfina oral
     if current_opioid == "morfina" and current_route == "oral":
         morphine_equivalent_dose = current_dose  # Si ya es morfina oral, no es necesario convertir
-    elif current_opioid in ["tapentadol", "tramadol", "codeina"]:
-        # Para opioides menos potentes que la morfina, dividir la dosis actual por el factor de conversión
-        morphine_equivalent_dose = current_dose / opioid_conversion_table[current_opioid][current_route]
     else:
-        # Para opioides más potentes o diferentes vías, multiplicar la dosis actual por el factor de conversión
+        # Para otros opioides, usar el factor de conversión correspondiente
         morphine_equivalent_dose = current_dose * opioid_conversion_table[current_opioid][current_route]
     
-    # Convertir la dosis equivalente de morfina a la vía oral si no es ya oral
-    if current_route != "oral" and current_opioid != "patch":
-        morphine_equivalent_dose = morphine_equivalent_dose * conversion_factor
-
     # Convertir la dosis equivalente de morfina al opioide objetivo
     if target_opioid == "morfina" and target_route == "oral":
         target_dose = morphine_equivalent_dose  # Si el objetivo es morfina oral, ya tenemos el resultado
@@ -83,10 +69,7 @@ def calculate_equivalent_dose(current_opioid, current_route, target_opioid, targ
         # Si el objetivo es un parche, usar la función convert_to_patch
         return convert_to_patch(target_opioid, morphine_equivalent_dose)
     elif target_opioid == "metadona":
-        # Si el objetivo es metadona, primero convertir a morfina oral si no lo es aún
-        if current_opioid != "morfina" or current_route != "oral":
-            morphine_equivalent_dose = morphine_equivalent_dose / conversion_factor if current_route != "oral" else morphine_equivalent_dose
-        # Luego usar la función calculate_metadona_dose para la conversión final
+        # Si el objetivo es metadona, usar la función calculate_metadona_dose para la conversión final
         target_dose = calculate_metadona_dose(morphine_equivalent_dose)
     elif current_opioid == "metadona" and target_opioid == "morfina":
         # Convertir de metadona a morfina utilizando un factor fijo de 5:1
@@ -96,7 +79,7 @@ def calculate_equivalent_dose(current_opioid, current_route, target_opioid, targ
         target_dose = morphine_equivalent_dose / opioid_conversion_table[target_opioid]["oral"]
         # Cambiar la vía de administración si es necesario
         if target_route != "oral":
-            target_dose = target_dose / conversion_factor
+            target_dose = target_dose / opioid_conversion_table[target_opioid][target_route]
     
     return target_dose
 
@@ -121,6 +104,8 @@ def main():
                 st.success(f"La dosis equivalente de {target_opioid} ({target_route}) es {target_dose}")
             except TypeError:
                 st.error("La conversión solicitada no es válida para la combinación de opioide y vía seleccionados.")
+            except ValueError as e:
+                st.error(str(e))
         else:
             st.warning("Por favor, ingrese una dosis válida mayor que 0.")
 
