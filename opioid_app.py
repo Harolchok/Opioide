@@ -72,17 +72,17 @@ def calculate_equivalent_dose(current_opioid, current_route, target_opioid, targ
         morphine_dose = morphine_dose * conversion_factor
 
     # Paso 3: Convertir la dosis de morfina al opioide objetivo
-    if target_opioid in more_potent_opioids:
+    if target_route == "patch" and target_opioid == "fentanilo":
+        patch_table = opioid_conversion_table[target_opioid].get("patch", {})
+        for dose, limit in patch_table.items():
+            if morphine_dose <= limit:
+                return f"{dose} mcg/h"
+    elif target_opioid in more_potent_opioids:
         target_dose = morphine_dose / opioid_conversion_table[target_opioid][target_route]
     elif target_opioid in less_potent_opioids:
         target_dose = morphine_dose * opioid_conversion_table[target_opioid][target_route]
     elif target_opioid == "hidrocodona" or target_opioid == "morfina":
         target_dose = morphine_dose
-    elif target_route == "patch":
-        patch_table = opioid_conversion_table[target_opioid].get("patch", {})
-        for dose, limit in patch_table.items():
-            if morphine_dose <= limit:
-                return f"{dose} mcg/h"
     else:
         target_dose = morphine_dose / opioid_conversion_table[target_opioid][target_route]
     
