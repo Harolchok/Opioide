@@ -65,7 +65,12 @@ def calculate_equivalent_dose(current_opioid, current_route, target_opioid, targ
 
     # Convertir la dosis actual al equivalente en morfina IV
     if current_opioid == "morfina":
-        morphine_iv_dose = convert_morphine_iv_oral(current_route, current_dose, conversion_factor)
+        if current_route == "oral" and target_route == "iv":
+            return convert_morphine_iv_oral(current_route, current_dose, conversion_factor)
+        elif current_route == "iv" and target_route == "oral":
+            return convert_morphine_iv_oral(current_route, current_dose, conversion_factor)
+        else:
+            morphine_iv_dose = convert_morphine_iv_oral(current_route, current_dose, conversion_factor)
     else:
         morphine_iv_dose = current_dose * opioid_conversion_table[current_opioid][current_route]
 
