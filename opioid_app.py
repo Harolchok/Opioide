@@ -39,6 +39,7 @@ def convert_to_patch(opioid, morphine_equivalent_dose):
 
 def calculate_metadona_dose(morphine_equivalent_dose):
     # Función para calcular la dosis de metadona basada en la dosis de morfina equivalente
+    st.write(f"Dosis de morfina equivalente: {morphine_equivalent_dose}")  # Depuración
     if morphine_equivalent_dose < 30:
         # Si la dosis es menor a 30 mg, no se puede convertir a metadona
         raise ValueError("La dosis de morfina equivalente debe ser al menos 30 mg para convertir a metadona.")
