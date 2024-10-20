@@ -63,7 +63,7 @@ def calculate_equivalent_dose(current_opioid, current_route, target_opioid, targ
         morphine_equivalent_dose = current_dose * opioid_conversion_table[current_opioid][current_route]
     
     # Convertir la dosis equivalente de morfina a la vía oral si no es ya oral
-    if current_route != "oral" and current_route in ["iv", "sc"]:
+    if current_route in ["iv", "sc"]:
         morphine_equivalent_dose = morphine_equivalent_dose * conversion_factor
 
     # Convertir la dosis equivalente de morfina al opioide objetivo
