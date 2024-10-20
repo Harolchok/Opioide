@@ -77,6 +77,15 @@ def calculate_equivalent_dose(current_opioid, current_route, target_opioid, targ
         for dose, limit in patch_table.items():
             if morphine_dose <= limit:
                 return f"{dose} mcg/h"
+    elif target_opioid == "metadona" and target_route == "oral":
+        if morphine_dose <= 90:
+            target_dose = morphine_dose / opioid_conversion_table[target_opioid]["oral"]["<=90"]
+        elif 90 < morphine_dose <= 300:
+            target_dose = morphine_dose / opioid_conversion_table[target_opioid]["oral"]["91-300"]
+        else:
+            target_dose = morphine_dose / opioid_conversion_table[target_opioid]["oral"][">300"]
+    elif current_opioid == "metadona" and target_opioid == "morfina" and current_route == "oral" and target_route == "oral":
+        target_dose = current_dose * opioid_conversion_table[current_opioid]["to_morphine_oral"]
     elif target_opioid in more_potent_opioids:
         target_dose = morphine_dose / opioid_conversion_table[target_opioid][target_route]
     elif target_opioid in less_potent_opioids:
