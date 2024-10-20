@@ -12,44 +12,22 @@ opioid_conversion_table = {
     "hidrocodona": {"oral": 1},
     "tapentadol": {"oral": 3.3},
     "tramadol": {"oral": 4, "iv": 10},
-    "metadona": {"oral": 5},
+    "metadona": {"oral": {
+        "<=90": 4, "91-300": 8, ">300": 12
+    }, "to_morphine_oral": 5},
     "codeina": {"oral": 10}
 }
 
-def calculate_equivalent_dose(current_opioid, current_route, target_opioid, target_route, current_dose, conversion_factor):
-    # Verificar la disponibilidad de las presentaciones para la conversión
-    if opioid_conversion_table[current_opioid].get(current_route) is None:
-        raise TypeError("La conversión solicitada no es válida para la combinación de opioide y vía seleccionados.")
+more_potent_opioids = ["hidromorfona", "metadona", "oxicodona", "fentanilo"]
+less_potent_opioids = ["tapentadol", "tramadol", "codeina"]
 
-    # Convertir la dosis actual al equivalente en morfina oral
-    if current_opioid == "morfina" and current_route == "oral":
-        morphine_iv_dose = current_dose / conversion_factor
-    elif current_opioid == "morfina" and current_route == "iv":
-        morphine_oral_dose = current_dose * conversion_factor
-    else:
-        morphine_oral_dose = current_dose * opioid_conversion_table[current_opioid][current_route]
-
-    # Convertir la dosis de morfina oral al opioide objetivo
-    if target_opioid == "morfina" and target_route == "oral":
-        target_dose = morphine_oral_dose
-    elif target_opioid == "morfina" and target_route == "iv":
-        target_dose = morphine_oral_dose / conversion_factor
-    elif target_route == "patch":
-        patch_table = opioid_conversion_table[target_opioid].get("patch", {})
-        for dose, limit in patch_table.items():
-            if morphine_oral_dose <= limit:
-                return f"{dose} mcg/h"
-    else:
-        target_dose = morphine_oral_dose / opioid_conversion_table[target_opioid][target_route]
-    
-    return target_dose
 
 def main():
     st.title("Rotación de Opioides")
     st.write("Ingrese el opioide actual, la vía de administración y el opioide al que desea rotar con la vía de administración deseada para obtener la dosis equivalente.")
 
     # Organizar la selección de opciones en columnas
-    conversion_factor = st.radio("Seleccione el factor de conversión entre oral e IV", (2, 3))
+    conversion_factor = st.radio("Seleccione el factor de conversión entre morfina oral e IV", (2, 3))
     col1, col2 = st.columns(2)
 
     with col1:
@@ -75,6 +53,44 @@ def main():
                 st.error(str(e))
         else:
             st.warning("Por favor, ingrese una dosis válida mayor que 0.")
+
+def calculate_equivalent_dose(current_opioid, current_route, target_opioid, target_route, current_dose, conversion_factor):
+    # Verificar la disponibilidad de las presentaciones para la conversión
+    if opioid_conversion_table[current_opioid].get(current_route) is None:
+        raise TypeError("La conversión solicitada no es válida para la combinación de opioide y vía seleccionados.")
+
+    # Paso 1: Convertir la dosis actual al equivalente en morfina por la misma vía
+    if current_route == "iv":
+        morphine_dose = current_dose * opioid_conversion_table[current_opioid][current_route]
+    elif current_route == "oral":
+        morphine_dose = current_dose * opioid_conversion_table[current_opioid][current_route]
+    else:
+        morphine_dose = current_dose
+
+    # Paso 2: Convertir la dosis de morfina a la vía deseada
+    if current_route == "oral" and target_route == "iv":
+        morphine_dose = morphine_dose / conversion_factor
+    elif current_route == "iv" and target_route == "oral":
+        morphine_dose = morphine_dose * conversion_factor
+
+    # Paso 3: Convertir la dosis de morfina al opioide objetivo
+    if target_opioid in more_potent_opioids:
+        target_dose = morphine_dose / opioid_conversion_table[target_opioid][target_route]
+    elif target_opioid in less_potent_opioids:
+        target_dose = morphine_dose * opioid_conversion_table[target_opioid][target_route]
+    elif target_opioid == "hidrocodona":
+        target_dose = morphine_dose
+    elif target_opioid == "morfina":
+        target_dose = morphine_dose
+    elif target_route == "patch":
+        patch_table = opioid_conversion_table[target_opioid].get("patch", {})
+        for dose, limit in patch_table.items():
+            if morphine_dose <= limit:
+                return f"{dose} mcg/h"
+    else:
+        target_dose = morphine_dose / opioid_conversion_table[target_opioid][target_route]
+    
+    return target_dose
 
 if __name__ == "__main__":
     main()
